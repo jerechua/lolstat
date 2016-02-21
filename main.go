@@ -24,4 +24,6 @@ func main() {
 		log.Panic(err)
 	}
 	fmt.Println(res)
+
+	fmt.Println(client.ChampionByID(99))
 }

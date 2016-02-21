@@ -93,6 +93,15 @@ func (r *RiotAPI) initChampionsAPI() error {
 	return nil
 }
 
+func (r *RiotAPI) ChampionByID(ID int) *Champion {
+	for _, c := range r.Champions {
+		if c.ID == ID {
+			return &c
+		}
+	}
+	return nil
+}
+
 func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
