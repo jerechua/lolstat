@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"./client/riot"
 )
@@ -9,7 +10,7 @@ import (
 func main() {
 	client, err := riot.NAClient()
 	if err != nil {
-		fmt.Println(err)
+		log.Panic(err)
 	}
 
 	for _, c := range client.Champions {

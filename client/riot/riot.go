@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strings"
+
+	"../../myhttp"
 )
 
 var (
@@ -41,7 +41,7 @@ func NAClient() (*RiotAPI, error) {
 func newClient(region string) (*RiotAPI, error) {
 	riot := &RiotAPI{
 		Name:    "Riot",
-		BaseURL: "https://na.api.pvp.net",
+		BaseURL: "na.api.pvp.net",
 		APIKey:  *riotAPIKeyFlag,
 		Region:  region,
 	}
@@ -58,22 +58,17 @@ func (r *RiotAPI) initChampionsAPI() error {
 	uri := fmt.Sprintf("/api/lol/static-data/%s/v1.2/champion", r.Region)
 
 	res, err := r.get(uri)
-	if res.StatusCode != 200 {
-		return fmt.Errorf("Expected status code 200, but got %d", res.StatusCode)
-	}
 	if err != nil {
 		return err
 	}
-
-	contents, err := ioutil.ReadAll(res.Body)
-	if err != nil {
+	if err := res.StatusError(); err != nil {
 		return err
 	}
 
 	// Riot's API returns champion names as a key, so just treat it as a generic
 	// type, and loop over everything making them into "Champion"
 	var champs interface{}
-	if err = json.Unmarshal(contents, &champs); err != nil {
+	if err = json.Unmarshal(res.Body(), &champs); err != nil {
 		return err
 	}
 
@@ -100,14 +95,16 @@ func (r *RiotAPI) initChampionsAPI() error {
 	return nil
 }
 
-func (r *RiotAPI) SummonerByName(names ...string) (*http.Response, error) {
+func (r *RiotAPI) SummonerByName(names ...string) (*myhttp.Response, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
 
 	return r.get(uri)
 }
 
-func (r *RiotAPI) get(uri string) (*http.Response, error) {
-	url := fmt.Sprintf("%s%s?api_key=%s", r.BaseURL, uri, r.APIKey)
-	return http.Get(url)
+func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
+	req := myhttp.NewRequest(r.BaseURL, uri)
+	req.Secure()
+	req.AddQueryParam("api_key", r.APIKey)
+	return req.Get()
 }
