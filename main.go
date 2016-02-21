@@ -18,4 +18,10 @@ func main() {
 	}
 
 	fmt.Println(len(client.Champions))
+
+	res, err := client.SummonersByName("blooooop")
+	if err != nil {
+		log.Panic(err)
+	}
+	fmt.Println(res)
 }

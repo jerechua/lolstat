@@ -1,6 +1,7 @@
 package riot
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -24,6 +25,12 @@ func init() {
 type Champion struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+type Summoner struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	ProfileIconId int64  `json:"profileIconId"`
 }
 
 type RiotAPI struct {
@@ -67,26 +74,17 @@ func (r *RiotAPI) initChampionsAPI() error {
 
 	// Riot's API returns champion names as a key, so just treat it as a generic
 	// type, and loop over everything making them into "Champion"
-	var champs interface{}
-	if err = json.Unmarshal(res.Body(), &champs); err != nil {
+	champs, err := decode(res.Body())
+	if err != nil {
 		return err
 	}
 
 	var allChampions []Champion
 	reply := champs.(map[string]interface{})
 	for _, i := range reply["data"].(map[string]interface{}) {
-
-		// As ugly as it may be, since this was unmarshalled into a generic
-		// interface, it would be easier to remarshal and unmarshal again into
-		// the correct struct. Otherwise we'd have to manually populate it. Might
-		// actually be better to do that..
-		b, err := json.Marshal(i)
-		if err != nil {
-			return err
-		}
-
 		var champ Champion
-		if err = json.Unmarshal(b, &champ); err != nil {
+		err := remarshal(i, &champ)
+		if err != nil {
 			return err
 		}
 		allChampions = append(allChampions, champ)
@@ -95,11 +93,31 @@ func (r *RiotAPI) initChampionsAPI() error {
 	return nil
 }
 
-func (r *RiotAPI) SummonerByName(names ...string) (*myhttp.Response, error) {
+func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
 
-	return r.get(uri)
+	res, err := r.get(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	summs, err := decode(res.Body())
+	if err != nil {
+		return nil, err
+	}
+
+	var allSummoners []Summoner
+	// _ is the summoner name
+	for _, i := range summs.(map[string]interface{}) {
+		var s Summoner
+		err := remarshal(i, &s)
+		if err != nil {
+			return nil, err
+		}
+		allSummoners = append(allSummoners, s)
+	}
+	return allSummoners, nil
 }
 
 func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
@@ -107,4 +125,39 @@ func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
 	req.Secure()
 	req.AddQueryParam("api_key", r.APIKey)
 	return req.Get()
+}
+
+// decode takes the json body of the response and unmarshals it into a
+// map[string]interface{}. The response can be casted by doing:
+//
+// res := decode(res.Body())
+// res.(map[string]interface{})
+func decode(b []byte) (interface{}, error) {
+	d := json.NewDecoder(bytes.NewBuffer(b))
+	d.UseNumber()
+	var i interface{}
+	if err := d.Decode(&i); err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
+// remarshal will take interface i, which is a generic unmarshalled json object
+// and s is the struct to put i into. expects the json response to be a map of
+// "foo": {"bar": "baz"}, where "foo" is not a well defined field, and
+// {"bar": "baz"} is a well defined field
+func remarshal(i, s interface{}) error {
+	// As ugly as it may be, since this was unmarshalled into a generic
+	// interface, it would be easier to remarshal and unmarshal again into
+	// the correct struct. Otherwise we'd have to manually populate it. Might
+	// actually be better to do that..
+	b, err := json.Marshal(i)
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	return nil
 }
