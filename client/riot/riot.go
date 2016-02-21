@@ -2,11 +2,24 @@ package riot
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
+
+var (
+	riotAPIKeyFlag = flag.String("riot_api_key", "6fc580c4-5f1e-4738-b07f-582e1e987c7c", "The Riot API key.")
+)
+
+func init() {
+	flag.Parse()
+
+	if *riotAPIKeyFlag == "" {
+		panic("--riot_api_key is a required flag.")
+	}
+}
 
 type Champion struct {
 	ID   int    `json:"id"`
@@ -29,7 +42,7 @@ func newClient(region string) (*RiotAPI, error) {
 	riot := &RiotAPI{
 		Name:    "Riot",
 		BaseURL: "https://na.api.pvp.net",
-		APIKey:  "6fc580c4-5f1e-4738-b07f-582e1e987c7c",
+		APIKey:  *riotAPIKeyFlag,
 		Region:  region,
 	}
 
@@ -45,6 +58,9 @@ func (r *RiotAPI) initChampionsAPI() error {
 	uri := fmt.Sprintf("/api/lol/static-data/%s/v1.2/champion", r.Region)
 
 	res, err := r.get(uri)
+	if res.StatusCode != 200 {
+		return fmt.Errorf("Expected status code 200, but got %d", res.StatusCode)
+	}
 	if err != nil {
 		return err
 	}
