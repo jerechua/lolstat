@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"../../models"
 	"../../myhttp"
 )
 
@@ -139,23 +140,7 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	return allSummoners, nil
 }
 
-type Match struct {
-	// This field is not in the JSON response, but kept here so we can reuse
-	// this model for the DB.
-	SummonerID int64
-	Timestamp  int64  `json:"timestamp"`
-	Champion   int    `json:"champion"`
-	Region     string `json:"region"`
-	Queue      string `json:"queue"`
-	Season     string `json:"season"`
-	MatchID    int64  `json:"matchId"`
-	// Role is either DUO, NONE, SOLO, DUO_CARRY, DUO_SUPPORT
-	Role       string `json:"role"`
-	PlatformID string `json:"platformId"`
-	Lane       string `json:"lane"`
-}
-
-func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*Match, error) {
+func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.Match, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 
 	res, err := r.get(uri)
@@ -164,10 +149,10 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*Match, error) {
 	}
 
 	var matchList struct {
-		Matches    []*Match `json:"matches"`
-		TotalGames int      `json:"totalGames"`
-		StartIndex int      `json:startIndex`
-		EndIndex   int      `json:endIndex`
+		Matches    []*models.Match `json:"matches"`
+		TotalGames int             `json:"totalGames"`
+		StartIndex int             `json:startIndex`
+		EndIndex   int             `json:endIndex`
 	}
 
 	err = decode(res.Body(), &matchList)
@@ -176,6 +161,8 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*Match, error) {
 	}
 
 	for _, m := range matchList.Matches {
+		// This field is not in the JSON response, but kept here so we can reuse
+		// this model for the DB.
 		m.SummonerID = ID
 	}
 
