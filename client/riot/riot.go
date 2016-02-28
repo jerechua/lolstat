@@ -22,6 +22,14 @@ func init() {
 	}
 }
 
+type RiotAPI struct {
+	Name         string
+	BaseURL      string
+	APIKey       string
+	Region       string
+	ChampionsAPI *ChampionsAPI
+}
+
 type ChampionsAPI struct {
 	champions []*Champion
 }
@@ -48,14 +56,6 @@ type Summoner struct {
 	ID            int    `json:"id"`
 	Name          string `json:"name"`
 	ProfileIconId int64  `json:"profileIconId"`
-}
-
-type RiotAPI struct {
-	Name         string
-	BaseURL      string
-	APIKey       string
-	Region       string
-	ChampionsAPI *ChampionsAPI
 }
 
 func NAClient() (*RiotAPI, error) {
