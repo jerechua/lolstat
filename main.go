@@ -15,11 +15,11 @@ func main() {
 		log.Panic(err)
 	}
 
-	for _, c := range client.Champions {
-		fmt.Printf("id: %d,  name: %s", c.ID, c.Name)
+	for _, c := range client.ChampionsAPI.All() {
+		fmt.Printf("id: %d,  name: %s\n", c.ID, c.Name)
 	}
 
-	fmt.Println(len(client.Champions))
+	fmt.Println(len(client.ChampionsAPI.All()))
 
 	res, err := client.SummonersByName("blooooop")
 	if err != nil {
@@ -27,5 +27,5 @@ func main() {
 	}
 	fmt.Println(res)
 
-	fmt.Println(client.ChampionByID(99))
+	fmt.Println(client.ChampionsAPI.ChampionByID(99))
 }

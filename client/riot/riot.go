@@ -22,6 +22,23 @@ func init() {
 	}
 }
 
+type ChampionsAPI struct {
+	champions []*Champion
+}
+
+func (api *ChampionsAPI) All() []*Champion {
+	return api.champions
+}
+
+func (api *ChampionsAPI) ChampionByID(ID int) *Champion {
+	for _, c := range api.champions {
+		if c.ID == ID {
+			return c
+		}
+	}
+	return nil
+}
+
 type Champion struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
@@ -34,11 +51,11 @@ type Summoner struct {
 }
 
 type RiotAPI struct {
-	Name      string
-	BaseURL   string
-	APIKey    string
-	Region    string
-	Champions []Champion
+	Name         string
+	BaseURL      string
+	APIKey       string
+	Region       string
+	ChampionsAPI *ChampionsAPI
 }
 
 func NAClient() (*RiotAPI, error) {
@@ -79,7 +96,7 @@ func (r *RiotAPI) initChampionsAPI() error {
 		return err
 	}
 
-	var allChampions []Champion
+	var allChampions []*Champion
 	reply := champs.(map[string]interface{})
 	for _, i := range reply["data"].(map[string]interface{}) {
 		var champ Champion
@@ -87,18 +104,9 @@ func (r *RiotAPI) initChampionsAPI() error {
 		if err != nil {
 			return err
 		}
-		allChampions = append(allChampions, champ)
+		allChampions = append(allChampions, &champ)
 	}
-	r.Champions = allChampions
-	return nil
-}
-
-func (r *RiotAPI) ChampionByID(ID int) *Champion {
-	for _, c := range r.Champions {
-		if c.ID == ID {
-			return &c
-		}
-	}
+	r.ChampionsAPI = &ChampionsAPI{allChampions}
 	return nil
 }
 
