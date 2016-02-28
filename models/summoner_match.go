@@ -1,11 +1,7 @@
 package models
 
 import (
-	"fmt"
-
 	"../db"
-
-	v "github.com/jerechua/validate"
 )
 
 func init() {
@@ -24,15 +20,4 @@ type SummonerMatch struct {
 	Role       string `json:"role"`
 	PlatformID string `json:"platformId"`
 	Lane       string `json:"lane"`
-}
-
-// Create creates a new SummonerMatch model
-func CreateSummonerMatch(sm *SummonerMatch) error {
-	if err := v.Validate(sm); err != nil {
-		return err
-	}
-	if err := db.DB.Create(sm).Error; err != nil {
-		return fmt.Errorf("This match already exists.")
-	}
-	return nil
 }

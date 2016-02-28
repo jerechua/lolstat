@@ -1,8 +1,10 @@
 package db
 
 import (
+	"fmt"
 	"log"
 
+	v "github.com/jerechua/validate"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -29,4 +31,15 @@ func Init() {
 	db.AutoMigrate(models...)
 
 	DB = db
+}
+
+// Create creates a new model for the given interface.
+func Create(i interface{}) error {
+	if err := v.Validate(i); err != nil {
+		return err
+	}
+	if err := DB.Create(i).Error; err != nil {
+		return fmt.Errorf("Err: %v", err)
+	}
+	return nil
 }

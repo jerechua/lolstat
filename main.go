@@ -6,7 +6,6 @@ import (
 
 	"./client/riot"
 	"./db"
-	"./models"
 )
 
 func main() {
@@ -38,7 +37,7 @@ func main() {
 	}
 	for _, m := range matches {
 		fmt.Println(m.MatchID)
-		if err := models.CreateSummonerMatch(m); err != nil {
+		if err := db.Create(m); err != nil {
 			log.Print(err)
 		}
 	}
