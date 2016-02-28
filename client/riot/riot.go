@@ -140,7 +140,7 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	return allSummoners, nil
 }
 
-func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.Match, error) {
+func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 
 	res, err := r.get(uri)
@@ -149,10 +149,10 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.Match, error) {
 	}
 
 	var matchList struct {
-		Matches    []*models.Match `json:"matches"`
-		TotalGames int             `json:"totalGames"`
-		StartIndex int             `json:startIndex`
-		EndIndex   int             `json:endIndex`
+		Matches    []*models.SummonerMatch `json:"matches"`
+		TotalGames int                     `json:"totalGames"`
+		StartIndex int                     `json:startIndex`
+		EndIndex   int                     `json:endIndex`
 	}
 
 	err = decode(res.Body(), &matchList)
