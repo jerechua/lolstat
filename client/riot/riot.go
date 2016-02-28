@@ -53,7 +53,7 @@ type Champion struct {
 }
 
 type Summoner struct {
-	ID            int    `json:"id"`
+	ID            int64  `json:"id"`
 	Name          string `json:"name"`
 	ProfileIconId int64  `json:"profileIconId"`
 }
@@ -140,19 +140,22 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 }
 
 type Match struct {
-	Timestamp int64  `json:"timestamp"`
-	Champion  int    `json:"champion"`
-	Region    string `json:"region"`
-	Queue     string `json:"queue"`
-	Season    string `json:"season"`
-	MatchID   int64  `json:"matchId"`
+	// This field is not in the JSON response, but kept here so we can reuse
+	// this model for the DB.
+	SummonerID int64
+	Timestamp  int64  `json:"timestamp"`
+	Champion   int    `json:"champion"`
+	Region     string `json:"region"`
+	Queue      string `json:"queue"`
+	Season     string `json:"season"`
+	MatchID    int64  `json:"matchId"`
 	// Role is either DUO, NONE, SOLO, DUO_CARRY, DUO_SUPPORT
 	Role       string `json:"role"`
 	PlatformID string `json:"platformId"`
 	Lane       string `json:"lane"`
 }
 
-func (r *RiotAPI) MatchListForSummonerID(ID int) ([]*Match, error) {
+func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*Match, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 
 	res, err := r.get(uri)
@@ -171,6 +174,11 @@ func (r *RiotAPI) MatchListForSummonerID(ID int) ([]*Match, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for _, m := range matchList.Matches {
+		m.SummonerID = ID
+	}
+
 	return matchList.Matches, nil
 }
 

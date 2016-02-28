@@ -34,6 +34,6 @@ func main() {
 		log.Panic(err)
 	}
 	for _, m := range matches {
-		fmt.Println(m.MatchID)
+		fmt.Println(m.SummonerID)
 	}
 }
