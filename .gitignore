@@ -1,3 +1,6 @@
+# lol-stat local database
+*.db
+
 # Virtual env folder
 venv/
 .venv/

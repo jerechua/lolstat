@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"./client/riot"
+
+	_ "./db"
 )
 
 func main() {
