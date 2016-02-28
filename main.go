@@ -5,11 +5,12 @@ import (
 	"log"
 
 	"./client/riot"
-
-	_ "./db"
+	"./db"
 )
 
 func main() {
+	db.Init()
+
 	client, err := riot.NAClient()
 	if err != nil {
 		log.Panic(err)
