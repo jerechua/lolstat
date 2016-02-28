@@ -6,6 +6,7 @@ import (
 
 	"./client/riot"
 	"./db"
+	"./models"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 
 	for _, c := range client.ChampionsAPI.All() {
 		fmt.Printf("id: %d,  name: %s\n", c.ID, c.Name)
+		break
 	}
 
 	fmt.Println(len(client.ChampionsAPI.All()))
@@ -35,6 +37,9 @@ func main() {
 		log.Panic(err)
 	}
 	for _, m := range matches {
-		fmt.Println(m.SummonerID)
+		fmt.Println(m.MatchID)
+		if err := models.CreateSummonerMatch(m); err != nil {
+			log.Print(err)
+		}
 	}
 }

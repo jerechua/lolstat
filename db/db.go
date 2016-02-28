@@ -9,7 +9,10 @@ import (
 
 const dbName = "./lolstat.db"
 
-var models []interface{}
+var (
+	DB     gorm.DB
+	models []interface{}
+)
 
 func RegisterModel(model interface{}) {
 	models = append(models, model)
@@ -24,4 +27,6 @@ func Init() {
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(100)
 	db.AutoMigrate(models...)
+
+	DB = db
 }
