@@ -169,10 +169,35 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, err
 	return matchList.Matches, nil
 }
 
-func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
+// MatchByID retrieves the match from the Riot API. This call has a lot of
+// returned values, consider just shoving this data to MongoDB?
+func (r *RiotAPI) MatchByID(ID int64) (*models.Match, error) {
+	uri := fmt.Sprintf("/api/lol/%s/v2.2/match/%d", r.Region, ID)
+
+	res, err := r.get(uri, "includeTimeline", "true")
+	if err != nil {
+		return nil, err
+	}
+
+	var match models.Match
+	err = decode(res.Body(), &match)
+	if err != nil {
+		return nil, err
+	}
+
+	return &match, nil
+}
+
+func (r *RiotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
+	if len(qp)%2 != 0 {
+		return nil, fmt.Errorf("Must supply query parameters in key-value pairs.")
+	}
 	req := myhttp.NewRequest(r.BaseURL, uri)
 	req.Secure()
 	req.AddQueryParam("api_key", r.APIKey)
+	for i := 0; i < len(qp); i += 2 {
+		req.AddQueryParam(qp[i], qp[i+1])
+	}
 	return req.Get()
 }
 

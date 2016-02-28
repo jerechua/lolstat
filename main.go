@@ -46,4 +46,12 @@ func main() {
 		}
 		break
 	}
+
+	match, err := client.MatchByID(2090888305)
+	if err != nil {
+		log.Panic(err)
+	}
+	log.Print(match.MatchID)
+	log.Print(match.MatchType)
+	log.Print(match.Timeline)
 }
