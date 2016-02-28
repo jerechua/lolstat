@@ -91,7 +91,8 @@ func (r *RiotAPI) initChampionsAPI() error {
 
 	// Riot's API returns champion names as a key, so just treat it as a generic
 	// type, and loop over everything making them into "Champion"
-	champs, err := decode(res.Body())
+	var champs interface{}
+	err = decode(res.Body(), &champs)
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,8 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 		return nil, err
 	}
 
-	summs, err := decode(res.Body())
+	var summs interface{}
+	err = decode(res.Body(), &summs)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +139,41 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	return allSummoners, nil
 }
 
+type Match struct {
+	Timestamp int64  `json:"timestamp"`
+	Champion  int    `json:"champion"`
+	Region    string `json:"region"`
+	Queue     string `json:"queue"`
+	Season    string `json:"season"`
+	MatchID   int64  `json:"matchId"`
+	// Role is either DUO, NONE, SOLO, DUO_CARRY, DUO_SUPPORT
+	Role       string `json:"role"`
+	PlatformID string `json:"platformId"`
+	Lane       string `json:"lane"`
+}
+
+func (r *RiotAPI) MatchListForSummonerID(ID int) ([]*Match, error) {
+	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
+
+	res, err := r.get(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	var matchList struct {
+		Matches    []*Match `json:"matches"`
+		TotalGames int      `json:"totalGames"`
+		StartIndex int      `json:startIndex`
+		EndIndex   int      `json:endIndex`
+	}
+
+	err = decode(res.Body(), &matchList)
+	if err != nil {
+		return nil, err
+	}
+	return matchList.Matches, nil
+}
+
 func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
 	req := myhttp.NewRequest(r.BaseURL, uri)
 	req.Secure()
@@ -149,14 +186,13 @@ func (r *RiotAPI) get(uri string) (*myhttp.Response, error) {
 //
 // res := decode(res.Body())
 // res.(map[string]interface{})
-func decode(b []byte) (interface{}, error) {
+func decode(b []byte, i interface{}) error {
 	d := json.NewDecoder(bytes.NewBuffer(b))
 	d.UseNumber()
-	var i interface{}
 	if err := d.Decode(&i); err != nil {
-		return nil, err
+		return err
 	}
-	return i, nil
+	return nil
 }
 
 // remarshal will take interface i, which is a generic unmarshalled json object

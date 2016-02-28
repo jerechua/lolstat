@@ -28,4 +28,12 @@ func main() {
 	fmt.Println(res)
 
 	fmt.Println(client.ChampionsAPI.ChampionByID(99))
+
+	matches, err := client.MatchListForSummonerID(25286733)
+	if err != nil {
+		log.Panic(err)
+	}
+	for _, m := range matches {
+		fmt.Println(m.MatchID)
+	}
 }
