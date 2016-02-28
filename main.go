@@ -37,8 +37,13 @@ func main() {
 	}
 	for _, m := range matches {
 		fmt.Println(m.MatchID)
-		if err := db.Create(m); err != nil {
+		exists, err := db.Exists(m)
+		if err != nil {
 			log.Print(err)
 		}
+		if exists {
+			log.Printf("%d already exists", m.MatchID)
+		}
+		break
 	}
 }

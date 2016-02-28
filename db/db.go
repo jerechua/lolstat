@@ -43,3 +43,15 @@ func Create(i interface{}) error {
 	}
 	return nil
 }
+
+// Exists checks the existence of a record and updates i to be the model in the
+// database.
+func Exists(in interface{}) (bool, error) {
+	if err := v.Validate(in); err != nil {
+		return false, err
+	}
+	// TODO: Consider updating/returning i if it exists since we're already
+	// querying anyway.
+	var i interface{}
+	return !DB.Where(in).First(i).RecordNotFound(), nil
+}
