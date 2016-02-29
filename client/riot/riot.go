@@ -6,9 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	"time"
 
 	"../../models"
 	"../../myhttp"
+	rl "../../myhttp/ratelimit"
 )
 
 var (
@@ -29,6 +31,8 @@ type RiotAPI struct {
 	APIKey       string
 	Region       string
 	ChampionsAPI *ChampionsAPI
+
+	rateLimitClient *rl.RateLimitClient
 }
 
 type ChampionsAPI struct {
@@ -69,6 +73,18 @@ func newClient(region string) (*RiotAPI, error) {
 		BaseURL: "na.api.pvp.net",
 		APIKey:  *riotAPIKeyFlag,
 		Region:  region,
+		rateLimitClient: &rl.RateLimitClient{
+			Limits: []*rl.Limit{
+				&rl.Limit{
+					Requests: 10,
+					Timeout:  10 * time.Second,
+				},
+				&rl.Limit{
+					Requests: 500,
+					Timeout:  10 * time.Minute,
+				},
+			},
+		},
 	}
 
 	if err := riot.initChampionsAPI(); err != nil {
@@ -200,7 +216,12 @@ func (r *RiotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
 	for i := 0; i < len(qp); i += 2 {
 		req.AddQueryParam(qp[i], qp[i+1])
 	}
-	res, err := req.Get()
+	cr := make(chan *myhttp.Response)
+	ce := make(chan error)
+	r.rateLimitClient.Get(req, cr, ce)
+	res := <-cr
+	err := <-ce
+
 	if err != nil {
 		return nil, err
 	}

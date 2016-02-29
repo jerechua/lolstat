@@ -1,38 +1,71 @@
 package ratelimit
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	"../../myhttp"
 )
 
-// limit assumes there's only 1 request goroutine accessing it
-type limit struct {
-	// requests is the actual limit
-	requests int
+type RateLimitClient struct {
+	mu     sync.RWMutex
+	Limits []*Limit
+}
 
-	// t is the interval before we can send another request.
-	t time.Duration
+func (rm *RateLimitClient) waitRequestAvailable() {
+	available := make(chan bool)
+	for _, l := range rm.Limits {
+		go l.waitAvailable(available)
+	}
+
+	for i := 0; i < len(rm.Limits); i++ {
+		// Wait for all limits too signal that we can send a request.
+		<-available
+	}
+}
+
+func (rm *RateLimitClient) applyRate() {
+	for _, l := range rm.Limits {
+		l.useRate()
+	}
+}
+
+func (rm *RateLimitClient) Get(req *myhttp.Request, res chan *myhttp.Response, err chan error) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+
+	rm.waitRequestAvailable()
+	go req.GetAsync(res, err)
+	rm.applyRate()
+}
+
+// Limit assumes there's only 1 request goroutine accessing it
+type Limit struct {
+	// Requests is the actual limit
+	Requests int
+
+	// Timeout is the interval before we can send another request.
+	Timeout time.Duration
 
 	mu   sync.Mutex
 	used int
 }
 
 // recoverRate is a thread-safe recovery of the rate.
-func (l *limit) recoverRate() {
+func (l *Limit) recoverRate() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.used--
 }
 
 // regenerate waits a certain amount of time then readds the rate limit.
-func (l *limit) regenerate() {
-	time.Sleep(l.t)
+func (l *Limit) regenerate() {
+	time.Sleep(l.Timeout)
 	l.recoverRate()
 }
 
 // useRate uses a rate limit and sets a timer to readd it.
-func (l *limit) useRate() {
+func (l *Limit) useRate() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.used++
@@ -40,17 +73,17 @@ func (l *limit) useRate() {
 }
 
 // hasAvailable checks to see if there are available rates
-func (l *limit) hasAvailable() bool {
+func (l *Limit) hasAvailable() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.used < l.requests {
+	if l.used < l.Requests {
 		return true
 	}
 	return false
 }
 
 // waitAvailable waits until a rate limit is available.
-func (l *limit) waitAvailable(available chan bool) {
+func (l *Limit) waitAvailable(available chan bool) {
 	for {
 		if l.hasAvailable() {
 			available <- true
@@ -58,36 +91,4 @@ func (l *limit) waitAvailable(available chan bool) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-}
-
-type RequestMaker struct {
-	mu     sync.RWMutex
-	limits []*limit
-}
-
-func (rm *RequestMaker) waitRequestAvailable() {
-	available := make(chan bool)
-	for _, l := range rm.limits {
-		go l.waitAvailable(available)
-	}
-
-	for i := 0; i < len(rm.limits); i++ {
-		// Wait for all limits too signal that we can send a request.
-		<-available
-	}
-}
-
-func (rm *RequestMaker) applyRate() {
-	for _, l := range rm.limits {
-		l.useRate()
-	}
-}
-
-func (rm *RequestMaker) MakeRequest(s string) {
-	rm.mu.Lock()
-	defer rm.mu.Unlock()
-
-	rm.waitRequestAvailable()
-	fmt.Println(s)
-	rm.applyRate()
 }

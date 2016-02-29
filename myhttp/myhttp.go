@@ -37,6 +37,13 @@ func (r *Request) Secure() {
 	r.scheme = "https"
 }
 
+// GetAsync if Get should be done via goroutine.
+func (r *Request) GetAsync(cr chan *Response, ce chan error) {
+	res, err := r.Get()
+	cr <- res
+	ce <- err
+}
+
 func (r *Request) Get() (*Response, error) {
 	u := &url.URL{
 		Host:   r.host,
