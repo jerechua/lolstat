@@ -6,6 +6,9 @@ import (
 
 	"./client/riot"
 	"./db"
+	"./models"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func main() {
@@ -54,4 +57,23 @@ func main() {
 	log.Print(match.MatchID)
 	log.Print(match.MatchType)
 	log.Print(match.Timeline)
+
+	c := db.MATCH.C()
+	var m models.Match
+	err = c.Find(&models.Match{MatchID: match.MatchID}).One(&m)
+	switch err {
+	case nil:
+		break
+	case mgo.ErrNotFound:
+		match.ID = bson.NewObjectId()
+		if err := c.Insert(match); err != nil {
+			log.Panic(err)
+		}
+		break
+	default:
+		log.Panic(err)
+	}
+
+	log.Print(m)
+
 }
