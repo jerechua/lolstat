@@ -174,7 +174,9 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, err
 func (r *RiotAPI) MatchByID(ID int64) (*models.Match, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/match/%d", r.Region, ID)
 
-	res, err := r.get(uri, "includeTimeline", "true")
+	// Never include timeline! Average size of response without timeline is ~40kb
+	// with the timeline is ~265kb.
+	res, err := r.get(uri, "includeTimeline", "false")
 	if err != nil {
 		return nil, err
 	}
