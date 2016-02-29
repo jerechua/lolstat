@@ -1,11 +1,11 @@
 package models
 
 import (
-	"../db"
+	"../db/gorm"
 )
 
 func init() {
-	db.RegisterModel(&SummonerMatch{})
+	gorm.RegisterModel(&SummonerMatch{})
 }
 
 type SummonerMatch struct {

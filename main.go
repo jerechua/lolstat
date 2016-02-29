@@ -37,7 +37,7 @@ func main() {
 	}
 	for _, m := range matches {
 		fmt.Println(m.MatchID)
-		exists, err := db.Exists(m)
+		exists, err := db.GORM.Exists(m)
 		if err != nil {
 			log.Print(err)
 		}
