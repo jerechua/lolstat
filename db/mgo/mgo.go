@@ -28,7 +28,7 @@ func New(database, collection string) *Client {
 
 	// Consider making this Monotonic. Don't think this matters as much for now
 	// since there's only 1 backend anyway.
-	session.SetMode(mgo.Strong, true)
+	session.SetMode(mgo.Monotonic, true)
 
 	return &Client{database, collection, session}
 }

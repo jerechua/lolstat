@@ -200,7 +200,14 @@ func (r *RiotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
 	for i := 0; i < len(qp); i += 2 {
 		req.AddQueryParam(qp[i], qp[i+1])
 	}
-	return req.Get()
+	res, err := req.Get()
+	if err != nil {
+		return nil, err
+	}
+	if err := res.StatusError(); err != nil {
+		return nil, err
+	}
+	return res, err
 }
 
 // decode takes the json body of the response and unmarshals it into a

@@ -57,6 +57,6 @@ func (g *Gorm) Exists(in interface{}) (bool, error) {
 	}
 	// TODO: Consider updating/returning i if it exists since we're already
 	// querying anyway.
-	var i interface{}
-	return !g.db.Where(in).First(i).RecordNotFound(), nil
+	result := g.db.Where(in).First(in)
+	return !result.RecordNotFound(), nil
 }
