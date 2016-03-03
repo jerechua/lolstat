@@ -90,7 +90,7 @@ func newClient(region string) (*riotAPI, error) {
 func (r *riotAPI) initChampionsAPI() error {
 	uri := fmt.Sprintf("/api/lol/static-data/%s/v1.2/champion", r.Region)
 
-	res, err := r.get(uri)
+	res, err := r.get(myhttp.NewRequestBuilder().SetPath(uri))
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
 
-	res, err := r.get(uri)
+	res, err := r.get(myhttp.NewRequestBuilder().SetPath(uri))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 func (r *riotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 
-	res, err := r.get(uri)
+	res, err := r.get(myhttp.NewRequestBuilder().SetPath(uri))
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,11 @@ func (r *riotAPI) MatchByID(ID int64) (*models.Match, error) {
 
 	// Never include timeline! Average size of response without timeline is ~40kb
 	// with the timeline is ~265kb.
-	res, err := r.get(uri, "includeTimeline", "false")
+	rb := myhttp.NewRequestBuilder().
+		SetPath(uri).
+		AddQueryParam("includeTimeline", "false")
+
+	res, err := r.get(rb)
 	if err != nil {
 		return nil, err
 	}
@@ -211,21 +215,20 @@ func (r *riotAPI) MatchByID(ID int64) (*models.Match, error) {
 	return &match, nil
 }
 
-func (r *riotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
-	if len(qp)%2 != 0 {
-		return nil, fmt.Errorf("Must supply query parameters in key-value pairs.")
-	}
-	req := myhttp.NewRequest(r.BaseURL, uri)
-	req.Secure()
-	req.AddQueryParam("api_key", r.APIKey)
-	for i := 0; i < len(qp); i += 2 {
-		req.AddQueryParam(qp[i], qp[i+1])
+func (r *riotAPI) get(rb *myhttp.RequestBuilder) (*myhttp.Response, error) {
+	rb.SetHost(r.BaseURL).
+		Secure().
+		AddQueryParam("api_key", r.APIKey)
+
+	req, err := rb.Build()
+	if err != nil {
+		return nil, err
 	}
 	cr := make(chan *myhttp.Response)
 	ce := make(chan error)
 	r.rateLimitClient.Get(req, cr, ce)
 	res := <-cr
-	err := <-ce
+	err = <-ce
 
 	if err != nil {
 		return nil, err

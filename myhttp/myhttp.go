@@ -7,6 +7,55 @@ import (
 	"net/url"
 )
 
+type RequestBuilder struct {
+	host        string
+	path        string
+	scheme      string
+	queryParams map[string]string
+}
+
+func NewRequestBuilder() *RequestBuilder {
+	return &RequestBuilder{
+		scheme:      "http",
+		queryParams: map[string]string{},
+	}
+}
+
+func (rb *RequestBuilder) SetHost(host string) *RequestBuilder {
+	rb.host = host
+	return rb
+}
+
+func (rb *RequestBuilder) SetPath(path string) *RequestBuilder {
+	rb.path = path
+	return rb
+}
+
+func (rb *RequestBuilder) Secure() *RequestBuilder {
+	rb.scheme = "https"
+	return rb
+}
+
+func (rb *RequestBuilder) AddQueryParam(k, v string) *RequestBuilder {
+	rb.queryParams[k] = v
+	return rb
+}
+
+func (rb *RequestBuilder) Build() (*Request, error) {
+	if rb.host == "" {
+		return nil, fmt.Errorf("RequestBuilder host must be set.")
+	}
+	if rb.path == "" {
+		return nil, fmt.Errorf("RequestBuilder path must be set.")
+	}
+	return &Request{
+		host:        rb.host,
+		path:        rb.path,
+		scheme:      rb.scheme,
+		queryParams: rb.queryParams,
+	}, nil
+}
+
 type Request struct {
 	host        string
 	path        string
