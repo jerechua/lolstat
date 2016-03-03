@@ -34,7 +34,7 @@ func main() {
 
 	fmt.Println(client.ChampionByID(99))
 
-	matches, err := client.MatchListForSummonerID(25286733)
+	matches, err := client.MatchListSinceTime(25286733, 1454822389504)
 	if err != nil {
 		log.Panic(err)
 	}
