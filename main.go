@@ -19,12 +19,12 @@ func main() {
 		log.Panic(err)
 	}
 
-	for _, c := range client.ChampionsAPI.All() {
+	for _, c := range client.Champions() {
 		fmt.Printf("id: %d,  name: %s\n", c.ID, c.Name)
 		break
 	}
 
-	fmt.Println(len(client.ChampionsAPI.All()))
+	fmt.Println(len(client.Champions()))
 
 	res, err := client.SummonersByName("blooooop")
 	if err != nil {
@@ -32,7 +32,7 @@ func main() {
 	}
 	fmt.Println(res)
 
-	fmt.Println(client.ChampionsAPI.ChampionByID(99))
+	fmt.Println(client.ChampionByID(99))
 
 	matches, err := client.MatchListForSummonerID(25286733)
 	if err != nil {
@@ -65,7 +65,7 @@ func main() {
 // getOrCreateMatchDetails will try to retrieve the match details from the datastore
 // first. If it doesn't fine it, it will fetch the details directly from the
 // Riot API.
-func getOrCreateMatchDetails(client *riot.RiotAPI, matchID int64) (*models.Match, error) {
+func getOrCreateMatchDetails(client riot.RiotAPI, matchID int64) (*models.Match, error) {
 	c := db.MATCH.C()
 	var m *models.Match
 	err := c.Find(&models.Match{MatchID: matchID}).One(&m)

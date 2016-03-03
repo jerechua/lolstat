@@ -25,31 +25,23 @@ func init() {
 	}
 }
 
-type RiotAPI struct {
-	Name         string
-	BaseURL      string
-	APIKey       string
-	Region       string
-	ChampionsAPI *ChampionsAPI
+type RiotAPI interface {
+	Champions() []*Champion
+	ChampionByID(ID int) *Champion
+	SummonersByName(names ...string) ([]Summoner, error)
+	MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error)
+	MatchByID(ID int64) (*models.Match, error)
+}
+
+// riotAPI implements RiotAPI
+type riotAPI struct {
+	Name      string
+	BaseURL   string
+	APIKey    string
+	Region    string
+	champions []*Champion
 
 	rateLimitClient *rl.RateLimitClient
-}
-
-type ChampionsAPI struct {
-	champions []*Champion
-}
-
-func (api *ChampionsAPI) All() []*Champion {
-	return api.champions
-}
-
-func (api *ChampionsAPI) ChampionByID(ID int) *Champion {
-	for _, c := range api.champions {
-		if c.ID == ID {
-			return c
-		}
-	}
-	return nil
 }
 
 type Champion struct {
@@ -63,12 +55,12 @@ type Summoner struct {
 	ProfileIconId int64  `json:"profileIconId"`
 }
 
-func NAClient() (*RiotAPI, error) {
+func NAClient() (RiotAPI, error) {
 	return newClient("na")
 }
 
-func newClient(region string) (*RiotAPI, error) {
-	riot := &RiotAPI{
+func newClient(region string) (*riotAPI, error) {
+	riot := &riotAPI{
 		Name:    "Riot",
 		BaseURL: "na.api.pvp.net",
 		APIKey:  *riotAPIKeyFlag,
@@ -94,8 +86,8 @@ func newClient(region string) (*RiotAPI, error) {
 	return riot, nil
 }
 
-// initChampionsAPI initializes the champions.
-func (r *RiotAPI) initChampionsAPI() error {
+// initchampionsAPI initializes the champions.
+func (r *riotAPI) initChampionsAPI() error {
 	uri := fmt.Sprintf("/api/lol/static-data/%s/v1.2/champion", r.Region)
 
 	res, err := r.get(uri)
@@ -124,11 +116,24 @@ func (r *RiotAPI) initChampionsAPI() error {
 		}
 		allChampions = append(allChampions, &champ)
 	}
-	r.ChampionsAPI = &ChampionsAPI{allChampions}
+	r.champions = allChampions
 	return nil
 }
 
-func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
+func (r *riotAPI) Champions() []*Champion {
+	return r.champions
+}
+
+func (r *riotAPI) ChampionByID(ID int) *Champion {
+	for _, c := range r.champions {
+		if c.ID == ID {
+			return c
+		}
+	}
+	return nil
+}
+
+func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
 
@@ -156,7 +161,7 @@ func (r *RiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 	return allSummoners, nil
 }
 
-func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
+func (r *riotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 
 	res, err := r.get(uri)
@@ -187,7 +192,7 @@ func (r *RiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, err
 
 // MatchByID retrieves the match from the Riot API. This call has a lot of
 // returned values, consider just shoving this data to MongoDB?
-func (r *RiotAPI) MatchByID(ID int64) (*models.Match, error) {
+func (r *riotAPI) MatchByID(ID int64) (*models.Match, error) {
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/match/%d", r.Region, ID)
 
 	// Never include timeline! Average size of response without timeline is ~40kb
@@ -206,7 +211,7 @@ func (r *RiotAPI) MatchByID(ID int64) (*models.Match, error) {
 	return &match, nil
 }
 
-func (r *RiotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
+func (r *riotAPI) get(uri string, qp ...string) (*myhttp.Response, error) {
 	if len(qp)%2 != 0 {
 		return nil, fmt.Errorf("Must supply query parameters in key-value pairs.")
 	}
