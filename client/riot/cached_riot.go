@@ -36,6 +36,10 @@ func (c *cachedRiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatc
 	return c.client.MatchListForSummonerID(ID)
 }
 
+func (c *cachedRiotAPI) MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error) {
+	return c.client.MatchListSinceTime(ID, beginTime)
+}
+
 func (c *cachedRiotAPI) MatchByID(ID int64) (*models.Match, error) {
 	return c.client.MatchByID(ID)
 }

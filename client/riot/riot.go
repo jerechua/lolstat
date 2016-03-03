@@ -162,9 +162,17 @@ func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 }
 
 func (r *riotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
-	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
+	return r.MatchListSinceTime(ID, 0)
+}
 
-	res, err := r.get(myhttp.NewRequestBuilder().SetPath(uri))
+func (r *riotAPI) MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error) {
+	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
+	rb := myhttp.NewRequestBuilder().SetPath(uri)
+	if beginTime != 0 {
+		rb.AddQueryParam("beginTime", fmt.Sprintf("%d", beginTime))
+	}
+
+	res, err := r.get(rb)
 	if err != nil {
 		return nil, err
 	}
