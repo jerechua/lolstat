@@ -66,21 +66,23 @@ func main() {
 // first. If it doesn't fine it, it will fetch the details directly from the
 // Riot API.
 func getOrCreateMatchDetails(client *riot.RiotAPI, matchID int64) (*models.Match, error) {
-	match, err := client.MatchByID(matchID)
-	if err != nil {
-		return nil, err
-	}
-	if match.MatchID != matchID {
-		return nil, fmt.Errorf("Match ID is not the same. Expected ID: %d, but got %d", matchID, match.MatchID)
-	}
-
 	c := db.MATCH.C()
 	var m *models.Match
-	err = c.Find(&models.Match{MatchID: match.MatchID}).One(&m)
+	err := c.Find(&models.Match{MatchID: matchID}).One(&m)
 	switch err {
 	case nil:
 		return m, nil
 	case mgo.ErrNotFound:
+		log.Printf("Match ID: %d is not in datastore, fetching from Riot", matchID)
+
+		match, err := client.MatchByID(matchID)
+		if err != nil {
+			return nil, err
+		}
+		if match.MatchID != matchID {
+			return nil, fmt.Errorf("Match ID is not the same. Expected ID: %d, but got %d", matchID, match.MatchID)
+		}
+
 		match.ID = bson.NewObjectId()
 		if err := c.Insert(match); err != nil {
 			return nil, err
