@@ -30,6 +30,7 @@ type RiotAPI interface {
 	ChampionByID(ID int) *Champion
 	SummonersByName(names ...string) ([]Summoner, error)
 	MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error)
+	MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error)
 	MatchByID(ID int64) (*models.Match, error)
 }
 
@@ -165,7 +166,7 @@ func (r *riotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, err
 	return r.MatchListSinceTime(ID, 0)
 }
 
-func (r *riotAPI) MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error) {
+func (r *riotAPI) MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error){
 	uri := fmt.Sprintf("/api/lol/%s/v2.2/matchlist/by-summoner/%d", r.Region, ID)
 	rb := myhttp.NewRequestBuilder().SetPath(uri)
 	if beginTime != 0 {
