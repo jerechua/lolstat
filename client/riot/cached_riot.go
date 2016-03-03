@@ -31,6 +31,7 @@ func newCachcedClient(region string) (*cachedRiotAPI, error) {
 func (api *cachedRiotAPI) Champions() []*Champion {
 	return api.client.Champions()
 }
+
 func (api *cachedRiotAPI) ChampionByID(ID int) *Champion {
 	return api.client.ChampionByID(ID)
 }
