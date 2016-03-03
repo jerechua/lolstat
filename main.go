@@ -14,7 +14,7 @@ import (
 func main() {
 	db.Init()
 
-	client, err := riot.NAClient()
+	client, err := riot.NewCachedNAClient()
 	if err != nil {
 		log.Panic(err)
 	}
