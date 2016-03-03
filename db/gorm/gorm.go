@@ -38,6 +38,10 @@ func New() *Gorm {
 	return &Gorm{db}
 }
 
+func (g *Gorm) DB() gorm.DB {
+	return g.db
+}
+
 // Create creates a new model for the given interface.
 func (g *Gorm) Create(i interface{}) error {
 	if err := v.Validate(i); err != nil {

@@ -40,7 +40,39 @@ func (api *cachedRiotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 }
 
 func (api *cachedRiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
-	return api.client.MatchListForSummonerID(ID)
+	gorm := db.GORM.DB()
+	var latestMatch models.SummonerMatch
+	gorm.Where(&models.SummonerMatch{SummonerID: ID}).Order("timestamp desc").First(&latestMatch)
+	if latestMatch.MatchID == 0 {
+		// Match List does not exist for this person, so lets just pull all that data
+		// down and save it.
+		matchList, err := api.client.MatchListForSummonerID(ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range matchList {
+			if err := db.GORM.Create(m); err != nil {
+				// Just return the err here, since presumably we get the list sorted.
+				// so it will just fix itself. Maybe.
+				return nil, err
+			}
+		}
+		return matchList, err
+	} else {
+		var cachedMatches []*models.SummonerMatch
+		gorm.Where(&models.SummonerMatch{SummonerID: ID}).Order("timestamp desc").Find(&cachedMatches)
+		// Person has been found, lets get their latest match and update their profile.
+		matchList, err := api.client.MatchListSinceTime(ID, latestMatch.Timestamp)
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range matchList {
+			if err := db.GORM.Create(m); err != nil {
+				return nil, err
+			}
+		}
+		return append(cachedMatches, matchList...), err
+	}
 }
 
 func (api *cachedRiotAPI) MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error) {

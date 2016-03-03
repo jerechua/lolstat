@@ -32,10 +32,12 @@ func main() {
 
 	fmt.Println(client.ChampionByID(99))
 
-	matches, err := client.MatchListSinceTime(25286733, 1454822389504)
+	// matches, err := client.MatchListSinceTime(25286733, 1454822389504)
+	matches, err := client.MatchListForSummonerID(25286733)
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Fatal(matches)
 	for _, m := range matches {
 		exists, err := db.GORM.Exists(&models.SummonerMatch{
 			MatchID:    m.MatchID,
