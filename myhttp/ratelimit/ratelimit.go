@@ -35,8 +35,7 @@ func (rm *RateLimitClient) Get(req *myhttp.Request, res chan *myhttp.Response, e
 	defer rm.mu.Unlock()
 
 	rm.waitRequestAvailable()
-	go req.GetAsync(res, err)
-	rm.applyRate()
+	go req.GetAsync(res, err, func() { rm.applyRate() })
 }
 
 // Limit assumes there's only 1 request goroutine accessing it

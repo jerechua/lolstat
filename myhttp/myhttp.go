@@ -38,7 +38,8 @@ func (r *Request) Secure() {
 }
 
 // GetAsync if Get should be done via goroutine.
-func (r *Request) GetAsync(cr chan *Response, ce chan error) {
+func (r *Request) GetAsync(cr chan *Response, ce chan error, done func()) {
+	defer done()
 	res, err := r.Get()
 	cr <- res
 	ce <- err
