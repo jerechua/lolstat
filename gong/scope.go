@@ -32,3 +32,12 @@ func (s *Scope) BodyJSON(in interface{}) error {
 func (s *Scope) Vars() map[string]string {
 	return mux.Vars(s.req)
 }
+
+// Var returns the URL variable to value.
+func (s *Scope) Var(v string) (string, error) {
+	val, ok := mux.Vars(s.req)[v]
+	if !ok {
+		return "", fmt.Errorf("could not find var: %q", v)
+	}
+	return val, nil
+}
