@@ -3,6 +3,7 @@ package gong
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,6 +17,18 @@ type Scope struct {
 // Write writes to the body of the response.
 func (s *Scope) Write(out []byte) {
 	s.res.Write(out)
+}
+
+// Write template writes the template file to the response.
+func (s *Scope) WriteTemplate(f string, params interface{}) error {
+	tmpl, err := template.ParseFiles(f)
+	if err != nil {
+		return err
+	}
+	if err := tmpl.Execute(s.res, params); err != nil {
+		return err
+	}
+	return nil
 }
 
 // BodyJSON reads the body of the request and parses it into JSON.
