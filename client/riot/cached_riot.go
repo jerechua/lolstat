@@ -37,7 +37,22 @@ func (api *cachedRiotAPI) ChampionByID(ID int) *Champion {
 }
 
 func (api *cachedRiotAPI) SummonersByName(name string) (*models.Summoner, error) {
-	return api.client.SummonersByName(name)
+	s := &models.Summoner{Name: name}
+	exists, err := db.GORM.Exists(s)
+	if err != nil {
+		return nil, fmt.Errorf("Error querying summoner: %v", err)
+	}
+	if !exists {
+		fmt.Printf("Summoner: %q isn't cachced. Fetching from Riot", name)
+		s, err = api.client.SummonersByName(name)
+		if err != nil {
+			return nil, err
+		}
+		if err := db.GORM.Create(s); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 func (api *cachedRiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {
