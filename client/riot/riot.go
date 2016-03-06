@@ -28,7 +28,7 @@ func init() {
 type RiotAPI interface {
 	Champions() []*Champion
 	ChampionByID(ID int) *Champion
-	SummonersByName(names ...string) ([]Summoner, error)
+	SummonersByName(names ...string) ([]*models.Summoner, error)
 	MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error)
 	MatchListSinceTime(ID, beginTime int64) ([]*models.SummonerMatch, error)
 	MatchByID(ID int64) (*models.Match, error)
@@ -48,12 +48,6 @@ type riotAPI struct {
 type Champion struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
-}
-
-type Summoner struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	ProfileIconId int64  `json:"profileIconId"`
 }
 
 func NAClient() (RiotAPI, error) {
@@ -134,7 +128,7 @@ func (r *riotAPI) ChampionByID(ID int) *Champion {
 	return nil
 }
 
-func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
+func (r *riotAPI) SummonersByName(names ...string) ([]*models.Summoner, error) {
 	joined := strings.Join(names, ",")
 	uri := fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", r.Region, joined)
 
@@ -149,15 +143,15 @@ func (r *riotAPI) SummonersByName(names ...string) ([]Summoner, error) {
 		return nil, err
 	}
 
-	var allSummoners []Summoner
+	var allSummoners []*models.Summoner
 	// _ is the summoner name
 	for _, i := range summs.(map[string]interface{}) {
-		var s Summoner
+		var s models.Summoner
 		err := remarshal(i, &s)
 		if err != nil {
 			return nil, err
 		}
-		allSummoners = append(allSummoners, s)
+		allSummoners = append(allSummoners, &s)
 	}
 	return allSummoners, nil
 }
