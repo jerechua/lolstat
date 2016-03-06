@@ -36,8 +36,8 @@ func (api *cachedRiotAPI) ChampionByID(ID int) *Champion {
 	return api.client.ChampionByID(ID)
 }
 
-func (api *cachedRiotAPI) SummonersByName(names ...string) ([]*models.Summoner, error) {
-	return api.client.SummonersByName(names...)
+func (api *cachedRiotAPI) SummonersByName(name string) (*models.Summoner, error) {
+	return api.client.SummonersByName(name)
 }
 
 func (api *cachedRiotAPI) MatchListForSummonerID(ID int64) ([]*models.SummonerMatch, error) {

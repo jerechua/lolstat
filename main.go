@@ -24,13 +24,11 @@ func main() {
 
 	fmt.Println(len(client.Champions()))
 
-	summs, err := client.SummonersByName("blooooop")
+	summ, err := client.SummonersByName("blooooop")
 	if err != nil {
 		log.Panic(err)
 	}
-	for _, s := range summs {
-		fmt.Printf("~~%v\n", s)
-	}
+	fmt.Printf("~~%v\n", summ)
 
 	fmt.Println(client.ChampionByID(99))
 
