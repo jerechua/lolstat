@@ -24,7 +24,7 @@ Roadblocks
 What's in the code
 ------------------
 
-- Weak attempts at creating a rate limiter and http libraries
+- Weak attempts at creating rate limiter and http libraries
 - Riot API client (which could actually be useful for others)
 - Caching version of the Riot API client, which queries DB first,
   and only requests if it doesn't exist. Uses Gorm in SQL for Users,
