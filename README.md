@@ -21,3 +21,11 @@ Roadblocks
     This could be crawled, but will hit rate limit fairly quickly.
   - Rate limits are way too low especially for development.
   
+What's in the code
+------------------
+
+- Weak attempts at creating a rate limiter and http libraries
+- Riot API client (which could actually be useful for others)
+- Caching version of the Riot API client, which queries DB first,
+  and only requests if it doesn't exist. Uses Gorm in SQL for Users,
+  and MGo in MongoDB for Match store.
